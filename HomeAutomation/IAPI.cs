@@ -15,7 +15,7 @@ namespace HomeAutomation
         [OperationContract]
         int SetStatus(string n, string a);
 
-        [WebGet(UriTemplate = "/status/get/{n}")]
+        [WebGet(UriTemplate = "/status/get/{n}", ResponseFormat = WebMessageFormat.Json)]
         [OperationContract]
         string GetStatus(string n);
 
@@ -23,7 +23,7 @@ namespace HomeAutomation
         [OperationContract]
         int SetEvent(string l, string t, string d);
 
-        [WebGet(UriTemplate = "/event/get/{l}")]
+        [WebGet(UriTemplate = "/event/get/{l}", ResponseFormat = WebMessageFormat.Json)]
         [OperationContract]
         string GetEvent(string l);
 
@@ -31,7 +31,7 @@ namespace HomeAutomation
         [OperationContract]
         int SetEnvironment(string l, string s, string t, string u, string r);
 
-        [WebGet(UriTemplate = "/environment/get/{l}")]
+        [WebGet(UriTemplate = "/environment/get/{l}", ResponseFormat = WebMessageFormat.Json)]
         [OperationContract]
         string GetEnvironment(string l);
     }

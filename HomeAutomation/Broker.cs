@@ -5,13 +5,14 @@ using System.Web;
 using System.Data;
 using System.Data.SqlClient;
 using System.Web.Script.Serialization;
+using System.Text;
 
 namespace HomeAutomation
 {
     public class Broker
     {
         SqlConnection conn;
-        SqlCommand comm;
+        SqlCommand cmd;
 
         SqlConnectionStringBuilder connStringBuilder;
 
@@ -26,7 +27,7 @@ namespace HomeAutomation
             connStringBuilder.AsynchronousProcessing = true;
             connStringBuilder.MultipleActiveResultSets = true;
             conn = new SqlConnection(connStringBuilder.ToString());
-            comm = conn.CreateCommand();
+            cmd = conn.CreateCommand();
         }
 
         public Broker()
@@ -34,16 +35,54 @@ namespace HomeAutomation
             ConnectToDb();
         }
 
+        public DataSet QueryToDataSet(string Query, string Parameter = null)
+        {
+            SqlDataAdapter da = new SqlDataAdapter();
+            cmd.CommandText = Query;
+            if (Parameter != null)
+            {
+                cmd.Parameters.AddWithValue("@p", Parameter);
+            }
+            da.SelectCommand = cmd;
+            DataSet ds = new DataSet();
+
+            conn.Open();
+            da.Fill(ds);
+            conn.Close();
+
+            return ds;
+        }
+
+        public string QueryToJSON(string Query, string Parameter = null)
+        {
+            DataSet ds = QueryToDataSet(Query, Parameter);
+            DataTable table = ds.Tables[0];
+            var list = new List<Dictionary<string, object>>();
+
+            foreach (DataRow row in table.Rows)
+            {
+                var dict = new Dictionary<string, object>();
+
+                foreach (DataColumn col in table.Columns)
+                {
+                    dict[col.ColumnName] = row[col];
+                }
+                list.Add(dict);
+            }
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            return serializer.Serialize(list);
+        }
+
         public int InsertStatus(string n, string a)
         {
             try
             {
-                comm.CommandText = "INSERT INTO hStatus (sta_name, sta_action) VALUES (@n, @a)";
-                comm.Parameters.AddWithValue("n", n);
-                comm.Parameters.AddWithValue("a", a);
-                comm.CommandType = CommandType.Text;
+                cmd.CommandText = "INSERT INTO hStatus (sta_name, sta_action) VALUES (@n, @a)";
+                cmd.Parameters.AddWithValue("n", n);
+                cmd.Parameters.AddWithValue("a", a);
+                cmd.CommandType = CommandType.Text;
                 conn.Open();
-                return comm.ExecuteNonQuery();
+                return cmd.ExecuteNonQuery();
             }
             catch (Exception)
             {
@@ -60,20 +99,20 @@ namespace HomeAutomation
 
         public string QueryStatus(string n)
         {
-            return "status " + n;
+            return QueryToJSON("SELECT * FROM hStatusCurrentV where sta_name = @p", n);
         }
 
         public int InsertEvent(string l, string t, string d)
         {
             try
             {
-                comm.CommandText = "INSERT INTO hEvent (eve_location, eve_type, eve_description) VALUES (@l, @t, @d)";
-                comm.Parameters.AddWithValue("l", l);
-                comm.Parameters.AddWithValue("t", t);
-                comm.Parameters.AddWithValue("d", d);
-                comm.CommandType = CommandType.Text;
+                cmd.CommandText = "INSERT INTO hEvent (eve_location, eve_type, eve_description) VALUES (@l, @t, @d)";
+                cmd.Parameters.AddWithValue("l", l);
+                cmd.Parameters.AddWithValue("t", t);
+                cmd.Parameters.AddWithValue("d", d);
+                cmd.CommandType = CommandType.Text;
                 conn.Open();
-                return comm.ExecuteNonQuery();
+                return cmd.ExecuteNonQuery();
             }
             catch (Exception)
             {
@@ -90,22 +129,22 @@ namespace HomeAutomation
 
         public string QueryEvent(string l)
         {
-            return "event " + l;
+            return QueryToJSON("SELECT * FROM hStatusCurrentV where sta_name = @p", l);
         }
 
         public int InsertEnvironment(string l, string s, string t, string u, string r)
         {
             try
             {
-                comm.CommandText = "INSERT INTO hEnvironment (env_location, env_sensor, env_type, env_unit, env_reading) VALUES (@l, @s, @t, @u, @r)";
-                comm.Parameters.AddWithValue("l", l);
-                comm.Parameters.AddWithValue("s", s);
-                comm.Parameters.AddWithValue("t", t);
-                comm.Parameters.AddWithValue("u", u);
-                comm.Parameters.AddWithValue("r", r);
-                comm.CommandType = CommandType.Text;
+                cmd.CommandText = "INSERT INTO hEnvironment (env_location, env_sensor, env_type, env_unit, env_reading) VALUES (@l, @s, @t, @u, @r)";
+                cmd.Parameters.AddWithValue("l", l);
+                cmd.Parameters.AddWithValue("s", s);
+                cmd.Parameters.AddWithValue("t", t);
+                cmd.Parameters.AddWithValue("u", u);
+                cmd.Parameters.AddWithValue("r", r);
+                cmd.CommandType = CommandType.Text;
                 conn.Open();
-                return comm.ExecuteNonQuery();
+                return cmd.ExecuteNonQuery();
             }
             catch (Exception)
             {
@@ -122,7 +161,7 @@ namespace HomeAutomation
 
         public string QueryEnvironment(string l)
         {
-            return "environment " + l;
+            return QueryToJSON("SELECT * FROM hEnvrionmentCurrentV where env_location = @p", l);
         }
 
     }
